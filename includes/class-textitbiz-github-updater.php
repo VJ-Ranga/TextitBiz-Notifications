@@ -18,7 +18,7 @@ class TextitBiz_GitHub_Updater {
 		$this->version         = (string) $version;
 		$this->owner           = (string) $owner;
 		$this->repo            = (string) $repo;
-		$this->cache_key       = 'textitbiz_github_release';
+		$this->cache_key       = 'textitbiz_github_release_' . md5( strtolower( $owner . '/' . $repo ) );
 
 		add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'check_for_update' ) );
 		add_filter( 'plugins_api', array( $this, 'plugin_info' ), 20, 3 );
@@ -97,7 +97,13 @@ class TextitBiz_GitHub_Updater {
 	}
 
 	private function get_latest_release() {
-		$cached = get_transient( $this->cache_key );
+		$force_check = false;
+
+		if ( is_admin() ) {
+			$force_check = (bool) filter_input( INPUT_GET, 'force-check', FILTER_VALIDATE_BOOLEAN );
+		}
+
+		$cached = $force_check ? false : get_transient( $this->cache_key );
 
 		if ( is_array( $cached ) ) {
 			return $cached;
@@ -134,13 +140,26 @@ class TextitBiz_GitHub_Updater {
 		$version = ltrim( (string) $body['tag_name'], 'vV' );
 		$zip_url = 'https://github.com/' . rawurlencode( $this->owner ) . '/' . rawurlencode( $this->repo ) . '/archive/refs/tags/' . rawurlencode( (string) $body['tag_name'] ) . '.zip';
 
+		if ( ! empty( $body['assets'] ) && is_array( $body['assets'] ) ) {
+			foreach ( $body['assets'] as $asset ) {
+				if ( empty( $asset['browser_download_url'] ) || empty( $asset['name'] ) ) {
+					continue;
+				}
+
+				if ( false !== stripos( (string) $asset['name'], '.zip' ) ) {
+					$zip_url = (string) $asset['browser_download_url'];
+					break;
+				}
+			}
+		}
+
 		$release = array(
 			'version' => $version,
 			'zip_url' => $zip_url,
 			'body'    => isset( $body['body'] ) ? (string) $body['body'] : '',
 		);
 
-		set_transient( $this->cache_key, $release, 6 * HOUR_IN_SECONDS );
+		set_transient( $this->cache_key, $release, 30 * MINUTE_IN_SECONDS );
 
 		return $release;
 	}
