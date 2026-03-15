@@ -144,13 +144,19 @@ class TextitBiz_Detector {
 
 	private function get_elementor_pro_forms() {
 		global $wpdb;
+		$meta_key = '_elementor_data';
+		$statuses = array( 'publish', 'draft', 'private' );
+		$placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
 
 		$results = $wpdb->get_results(
-			"SELECT p.ID, p.post_title, pm.meta_value
+			$wpdb->prepare(
+				"SELECT p.ID, p.post_title, pm.meta_value
 			FROM {$wpdb->posts} p
 			INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
-			WHERE pm.meta_key = '_elementor_data'
-			AND p.post_status IN ('publish','draft','private')",
+			WHERE pm.meta_key = %s
+			AND p.post_status IN ($placeholders)",
+				array_merge( array( $meta_key ), $statuses )
+			),
 			ARRAY_A
 		);
 

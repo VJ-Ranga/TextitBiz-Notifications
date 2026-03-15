@@ -17,6 +17,8 @@ class TextitBiz_Integration_Elementor_Pro {
 			return;
 		}
 
+		$post_id_raw = filter_input( INPUT_POST, 'post_id', FILTER_SANITIZE_NUMBER_INT );
+		$referrer_raw = filter_input( INPUT_POST, 'referrer', FILTER_UNSAFE_RAW );
 		$record_fields = $record->get( 'fields' );
 		$fields        = array();
 
@@ -26,14 +28,14 @@ class TextitBiz_Integration_Elementor_Pro {
 		}
 
 		$form_name = $record->get_form_settings( 'form_name' );
-		$post_id   = isset( $_POST['post_id'] ) ? absint( wp_unslash( $_POST['post_id'] ) ) : 0;
+		$post_id   = absint( $post_id_raw );
 		$form_key  = 'elementor_pro:' . $post_id . ':' . sanitize_title( $form_name );
 
 		if ( ! $this->plugin->is_form_monitored( $form_key ) ) {
 			return;
 		}
 
-		$page_url            = isset( $_POST['referrer'] ) ? esc_url_raw( wp_unslash( $_POST['referrer'] ) ) : '';
+		$page_url            = $referrer_raw ? esc_url_raw( wp_unslash( $referrer_raw ) ) : '';
 		$payload             = TextitBiz_Notifications::build_payload( 'elementor_pro', $form_name, $form_name, $fields, $page_url );
 		$payload['form_key'] = $form_key;
 

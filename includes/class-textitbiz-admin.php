@@ -14,6 +14,7 @@ class TextitBiz_Admin {
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_post_textitbiz_clear_logs', array( $this, 'handle_clear_logs' ) );
 	}
 
 	public function register_menu() {
@@ -35,6 +36,8 @@ class TextitBiz_Admin {
 	}
 
 	public function sanitize_settings( $input ) {
+		$existing   = $this->plugin->get_settings();
+		$new_secret = sanitize_text_field( $input['api_key'] ?? '' );
 		$checkboxes = array(
 			'enabled',
 			'enable_metform',
@@ -45,7 +48,8 @@ class TextitBiz_Admin {
 
 		$output = array(
 			'user_id'          => sanitize_text_field( $input['user_id'] ?? '' ),
-			'api_key'          => sanitize_text_field( $input['api_key'] ?? '' ),
+			'api_key'          => '',
+			'api_key_enc'      => '',
 			'admin_phone'      => sanitize_text_field( $input['admin_phone'] ?? '' ),
 			'message_template' => sanitize_textarea_field( $input['message_template'] ?? '' ),
 			'monitored_forms'  => array_values(
@@ -62,13 +66,38 @@ class TextitBiz_Admin {
 			$output[ $checkbox ] = isset( $input[ $checkbox ] ) ? '1' : '0';
 		}
 
+		if ( '' !== $new_secret ) {
+			$encrypted = $this->plugin->encrypt_secret( $new_secret );
+
+			if ( '' !== $encrypted ) {
+				$output['api_key_enc'] = $encrypted;
+			} else {
+				$output['api_key'] = $new_secret;
+			}
+		} elseif ( ! empty( $existing['api_key_enc'] ) ) {
+			$output['api_key_enc'] = $existing['api_key_enc'];
+		} elseif ( ! empty( $existing['api_key'] ) ) {
+			$encrypted = $this->plugin->encrypt_secret( $existing['api_key'] );
+
+			if ( '' !== $encrypted ) {
+				$output['api_key_enc'] = $encrypted;
+			} else {
+				$output['api_key'] = $existing['api_key'];
+			}
+		}
+
 		return $output;
 	}
 
 	public function render_page() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You are not allowed to access this page.', 'textitbiz-notifications' ) );
+		}
+
 		$settings    = $this->plugin->get_settings();
 		$active      = $this->detector->get_active_integrations();
 		$forms       = $this->detector->get_detected_forms();
+		$logs        = $this->plugin->get_logs();
 		$option_name = TextitBiz_Notifications::OPTION_KEY;
 		?>
 		<div class="wrap">
@@ -125,7 +154,7 @@ class TextitBiz_Admin {
 						</tr>
 						<tr>
 							<th scope="row">Password</th>
-							<td><input type="text" class="regular-text" name="<?php echo esc_attr( $option_name ); ?>[api_key]" value="<?php echo esc_attr( $settings['api_key'] ); ?>"></td>
+							<td><input type="password" class="regular-text" name="<?php echo esc_attr( $option_name ); ?>[api_key]" value="" autocomplete="new-password"><p class="description">Leave blank to keep existing password.</p></td>
 						</tr>
 					</table>
 				</div>
@@ -141,6 +170,44 @@ class TextitBiz_Admin {
 							</tr>
 						</tbody>
 					</table>
+				</div>
+
+				<div style="background:#fff;border:1px solid #dcdcde;padding:24px;margin:20px 0;">
+					<h2 style="margin-top:0;">SMS Logs</h2>
+					<p>Shows the last 20 send attempts with status (success, error, warning, info).</p>
+
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-bottom:12px;">
+						<input type="hidden" name="action" value="textitbiz_clear_logs">
+						<?php wp_nonce_field( 'textitbiz_clear_logs_action', 'textitbiz_clear_logs_nonce' ); ?>
+						<?php submit_button( 'Clear Logs', 'secondary', 'submit', false ); ?>
+					</form>
+
+					<?php if ( empty( $logs ) ) : ?>
+						<p>No logs yet.</p>
+					<?php else : ?>
+						<table class="widefat striped">
+							<thead>
+								<tr>
+									<th style="width:180px;">Time</th>
+									<th style="width:90px;">Status</th>
+									<th style="width:130px;">Source</th>
+									<th>Message</th>
+									<th>Details</th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php foreach ( $logs as $log ) : ?>
+									<tr>
+										<td><?php echo esc_html( $log['time'] ?? '' ); ?></td>
+										<td><strong><?php echo esc_html( strtoupper( (string) ( $log['level'] ?? '' ) ) ); ?></strong></td>
+										<td><?php echo esc_html( $log['source'] ?? '' ); ?></td>
+										<td><?php echo esc_html( $log['message'] ?? '' ); ?></td>
+										<td><code><?php echo esc_html( wp_json_encode( $log['context'] ?? array() ) ); ?></code></td>
+									</tr>
+								<?php endforeach; ?>
+							</tbody>
+						</table>
+					<?php endif; ?>
 				</div>
 
 				<?php submit_button(); ?>
@@ -232,6 +299,19 @@ class TextitBiz_Admin {
 		})();
 		</script>
 		<?php
+	}
+
+	public function handle_clear_logs() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You are not allowed to perform this action.', 'textitbiz-notifications' ) );
+		}
+
+		check_admin_referer( 'textitbiz_clear_logs_action', 'textitbiz_clear_logs_nonce' );
+
+		$this->plugin->clear_logs();
+
+		wp_safe_redirect( admin_url( 'options-general.php?page=textitbiz-notifications' ) );
+		exit;
 	}
 
 	private function build_form_template( array $form ) {

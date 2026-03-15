@@ -13,7 +13,7 @@ class TextitBiz_API {
 
 	public function send( $recipient, $message, array $context = array() ) {
 		$user_id = trim( (string) $this->plugin->get_setting( 'user_id', '' ) );
-		$api_key = trim( (string) $this->plugin->get_setting( 'api_key', '' ) );
+		$api_key = trim( (string) $this->plugin->get_api_password() );
 
 		if ( '' === $user_id || '' === $api_key ) {
 			return new WP_Error( 'textitbiz_missing_credentials', 'Textit.biz credentials are missing.' );
