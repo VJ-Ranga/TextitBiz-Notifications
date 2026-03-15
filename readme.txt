@@ -4,7 +4,7 @@ Tags: sms, forms, notifications, metform, elementor, contact-form-7, woocommerce
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.1.0
+Stable tag: 0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -55,7 +55,7 @@ Yes. The plugin shows field-based shortcodes like `{field:mf-tel}` depending on 
 
 == Changelog ==
 
-= 0.1.0 =
+= 0.1 =
 * Initial development version
 * Added form detection and selective SMS notifications
 * Added Textit.biz Basic HTTP API integration

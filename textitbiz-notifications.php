@@ -3,7 +3,7 @@
  * Plugin Name: TextitBiz Notifications
  * Plugin URI: https://github.com/VJ-Ranga/TextitBiz-Notifications
  * Description: Send SMS alerts through Textit.biz for selected WordPress form submissions.
- * Version: 0.1.0
+ * Version: 0.1
  * Author: VJ Ranga
  * License: GPL-2.0-or-later
  * Text Domain: textitbiz-notifications
