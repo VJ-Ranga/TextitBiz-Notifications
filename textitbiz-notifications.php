@@ -3,7 +3,7 @@
  * Plugin Name: TextitBiz Notifications
  * Plugin URI: https://github.com/VJ-Ranga/TextitBiz-Notifications
  * Description: Send SMS alerts through Textit.biz for selected WordPress form submissions.
- * Version: 0.1.4
+ * Version: 0.1.5
  * Author: VJ Ranga
  * License: GPL-2.0-or-later
  * Text Domain: textitbiz-notifications
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TEXTITBIZ_NOTIFICATIONS_VERSION', '0.1.4' );
+define( 'TEXTITBIZ_NOTIFICATIONS_VERSION', '0.1.5' );
 define( 'TEXTITBIZ_NOTIFICATIONS_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/class-textitbiz-detector.php';
@@ -23,6 +23,16 @@ require_once __DIR__ . '/includes/class-textitbiz-admin.php';
 require_once __DIR__ . '/includes/class-textitbiz-integration-manager.php';
 require_once __DIR__ . '/includes/class-textitbiz-notifications.php';
 require_once __DIR__ . '/includes/class-textitbiz-github-updater.php';
+
+add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'textitbiz_notifications_action_links' );
+
+function textitbiz_notifications_action_links( $links ) {
+	$settings_link = '<a href="' . esc_url( admin_url( 'options-general.php?page=textitbiz-notifications' ) ) . '">Settings</a>';
+
+	array_unshift( $links, $settings_link );
+
+	return $links;
+}
 
 TextitBiz_Notifications::instance();
 
