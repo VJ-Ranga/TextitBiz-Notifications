@@ -99,6 +99,11 @@ class TextitBiz_Admin {
 		$forms       = $this->detector->get_detected_forms();
 		$logs        = $this->plugin->get_logs();
 		$option_name = TextitBiz_Notifications::OPTION_KEY;
+		$clear_logs_url = wp_nonce_url(
+			admin_url( 'admin-post.php?action=textitbiz_clear_logs' ),
+			'textitbiz_clear_logs_action',
+			'textitbiz_clear_logs_nonce'
+		);
 		?>
 		<div class="wrap">
 			<h1>TextitBiz Notifications</h1>
@@ -176,11 +181,7 @@ class TextitBiz_Admin {
 					<h2 style="margin-top:0;">SMS Logs</h2>
 					<p>Shows the last 20 send attempts with status (success, error, warning, info).</p>
 
-					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-bottom:12px;">
-						<input type="hidden" name="action" value="textitbiz_clear_logs">
-						<?php wp_nonce_field( 'textitbiz_clear_logs_action', 'textitbiz_clear_logs_nonce' ); ?>
-						<?php submit_button( 'Clear Logs', 'secondary', 'submit', false ); ?>
-					</form>
+					<p><a class="button button-secondary" href="<?php echo esc_url( $clear_logs_url ); ?>">Clear Logs</a></p>
 
 					<?php if ( empty( $logs ) ) : ?>
 						<p>No logs yet.</p>
