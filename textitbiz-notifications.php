@@ -1,13 +1,13 @@
 <?php
 /**
  * Plugin Name: TextitBiz SMS
- * Plugin URI: https://github.com/VJ-Ranga/TextitBiz-Notifications
+ * Plugin URI: https://github.com/VJ-Ranga/TextitBiz-SMS
  * Description: Send SMS alerts through Textit.biz for selected WordPress form submissions.
  * Version: 0.1.13
  * Author: VJ Ranga
  * License: GPL-2.0-or-later
  * Text Domain: textitbiz-notifications
- * Update URI: https://github.com/VJ-Ranga/TextitBiz-Notifications
+ * Update URI: https://github.com/VJ-Ranga/TextitBiz-SMS
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -40,5 +40,5 @@ new TextitBiz_GitHub_Updater(
 	TEXTITBIZ_NOTIFICATIONS_FILE,
 	TEXTITBIZ_NOTIFICATIONS_VERSION,
 	'VJ-Ranga',
-	'TextitBiz-Notifications'
+	'TextitBiz-SMS'
 );
