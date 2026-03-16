@@ -2,7 +2,7 @@
 
 WordPress plugin for sending SMS alerts through [Textit.biz](https://textit.biz/) when selected forms are submitted.
 
-Current version: `v0.2`
+Current version: `v0.2.7`
 
 ## What it does
 
@@ -58,4 +58,4 @@ GPL-2.0-or-later
 
 ## Changelog
 
-- `v0.2`: version update, Elementor Pro submission reliability improvements, test SMS panel, settings visibility fixes.
+- `v0.2.7`: preserve newline formatting in SMS content; includes prior v0.2 improvements.

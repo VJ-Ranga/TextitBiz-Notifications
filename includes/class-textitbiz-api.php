@@ -106,9 +106,16 @@ class TextitBiz_API {
 	private function normalize_message_for_gateway( $message ) {
 		$text = (string) $message;
 
-		$text = str_replace( array( "\r\n", "\r", "\n" ), ' | ', $text );
-		$text = preg_replace( '/\s+/', ' ', $text );
-		$text = trim( $text );
+		$text = str_replace( array( "\r\n", "\r" ), "\n", $text );
+
+		$lines = array_filter(
+			array_map( 'trim', explode( "\n", $text ) ),
+			static function ( $line ) {
+				return '' !== $line;
+			}
+		);
+
+		$text = implode( "\n", $lines );
 
 		if ( '' === $text ) {
 			$text = 'New form submission';
