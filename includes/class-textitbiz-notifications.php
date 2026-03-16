@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class TextitBiz_Notifications {
 	const OPTION_KEY = 'textitbiz_notifications_settings';
 	const LOG_KEY    = 'textitbiz_notifications_logs';
-	const COOLDOWN_SECONDS = 60;
+	const COOLDOWN_SECONDS = 0;
 
 	private static $instance = null;
 	private $detector;
@@ -271,6 +271,15 @@ class TextitBiz_Notifications {
 			);
 		}
 
+		if (
+			! empty( $payload['subject'] ) &&
+			false === strpos( $template, '{subject}' ) &&
+			false === stripos( $message, 'Subject:' ) &&
+			false === stripos( $message, 'Package:' )
+		) {
+			$message .= "\nSubject: " . (string) $payload['subject'];
+		}
+
 		return trim( $message );
 	}
 
@@ -342,6 +351,10 @@ class TextitBiz_Notifications {
 	}
 
 	private function is_rate_limited( $source, array $payload ) {
+		if ( self::COOLDOWN_SECONDS <= 0 ) {
+			return false;
+		}
+
 		$form_key = isset( $payload['form_key'] ) ? (string) $payload['form_key'] : $source;
 		$lock_key = 'textitbiz_lock_' . md5( $source . '|' . $form_key );
 

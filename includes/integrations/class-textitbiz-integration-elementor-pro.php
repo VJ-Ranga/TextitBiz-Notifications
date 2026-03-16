@@ -38,6 +38,20 @@ class TextitBiz_Integration_Elementor_Pro {
 			}
 		}
 
+		$sent_data = $record->get( 'sent_data' );
+		if ( is_array( $sent_data ) ) {
+			foreach ( $sent_data as $key => $value ) {
+				$key = (string) $key;
+				if ( '' === $key ) {
+					continue;
+				}
+
+				if ( ! isset( $fields[ $key ] ) || '' === (string) $fields[ $key ] ) {
+					$fields[ $key ] = $value;
+				}
+			}
+		}
+
 		$form_name = (string) $record->get_form_settings( 'form_name' );
 
 		if ( '' === trim( $form_name ) && ! empty( $settings['form_name'] ) ) {
@@ -51,20 +65,6 @@ class TextitBiz_Integration_Elementor_Pro {
 		$post_id  = $this->detect_post_id( $record );
 		$form_key = 'elementor_pro:' . $post_id . ':' . sanitize_title( $form_name );
 
-		$this->plugin->log(
-			'info',
-			'elementor_pro',
-			'Elementor submission hook received.',
-			array(
-				'payload' => array(
-					'form_key'  => $form_key,
-					'form_name' => $form_name,
-					'form_id'   => (string) $post_id,
-					'fields'    => $fields,
-				),
-			)
-		);
-
 		$fingerprint = md5( $form_key . '|' . wp_json_encode( array_keys( $fields ) ) . '|' . wp_json_encode( $fields ) );
 
 		if ( isset( self::$processed[ $fingerprint ] ) ) {
@@ -75,7 +75,7 @@ class TextitBiz_Integration_Elementor_Pro {
 
 		if ( ! $this->is_monitored_elementor_form( $form_key, $form_name, $post_id ) ) {
 			$this->plugin->log(
-				'info',
+				'warning',
 				'elementor_pro',
 				'Elementor submission skipped because form is not selected.',
 				array(
@@ -91,6 +91,7 @@ class TextitBiz_Integration_Elementor_Pro {
 		}
 
 		$page_url            = $this->detect_referrer_url();
+		$fields              = $this->enrich_dynamic_package_field( $fields, $post_id, $page_url );
 		$payload             = TextitBiz_Notifications::build_payload( 'elementor_pro', $form_name, $form_name, $fields, $page_url );
 		$payload['form_key'] = $form_key;
 
@@ -172,5 +173,79 @@ class TextitBiz_Integration_Elementor_Pro {
 		}
 
 		return false;
+	}
+
+	private function enrich_dynamic_package_field( array $fields, $post_id, $page_url ) {
+		$has_package = false;
+
+		foreach ( $fields as $key => $value ) {
+			$key_lc = strtolower( (string) $key );
+
+			if ( false !== strpos( $key_lc, 'package' ) || false !== strpos( $key_lc, 'tour' ) || false !== strpos( $key_lc, 'subject' ) ) {
+				if ( '' !== trim( (string) $value ) ) {
+					$has_package = true;
+					break;
+				}
+			}
+		}
+
+		if ( $has_package ) {
+			return $fields;
+		}
+
+		$title = '';
+
+		if ( '' !== trim( (string) $page_url ) ) {
+			$mapped_post = $this->map_url_to_post_id( $page_url );
+
+			if ( $mapped_post > 0 ) {
+				$title = get_the_title( $mapped_post );
+			}
+		}
+
+		if ( '' === trim( (string) $title ) && $post_id > 0 ) {
+			$title = get_the_title( $post_id );
+		}
+
+		if ( false !== stripos( (string) $title, 'Elementor Single Page #' ) && '' !== trim( (string) $page_url ) ) {
+			$mapped_post = $this->map_url_to_post_id( $page_url );
+
+			if ( $mapped_post > 0 ) {
+				$title = get_the_title( $mapped_post );
+			}
+		}
+
+		if ( '' !== trim( (string) $title ) ) {
+			$fields['package'] = (string) $title;
+		}
+
+		return $fields;
+	}
+
+	private function map_url_to_post_id( $url ) {
+		$url = trim( (string) $url );
+
+		if ( '' === $url ) {
+			return 0;
+		}
+
+		if ( function_exists( 'url_to_postid' ) ) {
+			$mapped = absint( url_to_postid( $url ) );
+
+			if ( $mapped > 0 ) {
+				return $mapped;
+			}
+		}
+
+		$path = (string) wp_parse_url( $url, PHP_URL_PATH );
+		$path = trim( $path, '/' );
+
+		if ( '' === $path ) {
+			return 0;
+		}
+
+		$post = get_page_by_path( $path, OBJECT, array( 'page', 'post', 'tour', 'product' ) );
+
+		return $post ? (int) $post->ID : 0;
 	}
 }

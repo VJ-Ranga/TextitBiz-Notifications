@@ -190,7 +190,7 @@ class TextitBiz_Admin {
 
 				<div style="background:#fff;border:1px solid #dcdcde;padding:24px;margin:20px 0;">
 					<h2 style="margin-top:0;">SMS Logs</h2>
-					<p>Shows the last 20 send attempts with status (success, error, warning, info).</p>
+					<p>Shows recent SMS notifications. Details are hidden unless you open them.</p>
 
 					<p><a class="button button-secondary" href="<?php echo esc_url( $clear_logs_url ); ?>">Clear Logs</a></p>
 
@@ -204,17 +204,27 @@ class TextitBiz_Admin {
 									<th style="width:90px;">Status</th>
 									<th style="width:130px;">Source</th>
 									<th>Message</th>
-									<th>Details</th>
+									<th style="width:160px;">Details</th>
 								</tr>
 							</thead>
 							<tbody>
 								<?php foreach ( $logs as $log ) : ?>
+									<?php if ( 'info' === ( $log['level'] ?? '' ) ) { continue; } ?>
 									<tr>
 										<td><?php echo esc_html( $log['time'] ?? '' ); ?></td>
 										<td><strong><?php echo esc_html( strtoupper( (string) ( $log['level'] ?? '' ) ) ); ?></strong></td>
 										<td><?php echo esc_html( $log['source'] ?? '' ); ?></td>
 										<td><?php echo esc_html( $log['message'] ?? '' ); ?></td>
-										<td><code><?php echo esc_html( wp_json_encode( $log['context'] ?? array() ) ); ?></code></td>
+										<td>
+											<?php if ( empty( $log['context'] ) ) : ?>
+												-
+											<?php else : ?>
+												<details>
+													<summary>View details</summary>
+													<code style="display:block;white-space:pre-wrap;margin-top:6px"><?php echo esc_html( wp_json_encode( $log['context'] ) ); ?></code>
+												</details>
+											<?php endif; ?>
+										</td>
 									</tr>
 								<?php endforeach; ?>
 							</tbody>
