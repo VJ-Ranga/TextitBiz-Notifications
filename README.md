@@ -1,4 +1,4 @@
-# TextitBiz Notifications
+# TextitBiz SMS
 
 WordPress plugin for sending SMS alerts through [Textit.biz](https://textit.biz/) when selected forms are submitted.
 
@@ -46,8 +46,8 @@ Request format used by the plugin:
 ## Installation for development
 
 1. Copy this project folder into `wp-content/plugins/textitbiz-notifications`
-2. Activate `TextitBiz Notifications`
-3. Open `Settings -> TextitBiz Notifications`
+2. Activate `TextitBiz SMS`
+3. Open `Settings -> TextitBiz SMS`
 4. Select forms, enter Textit.biz credentials, and save
 
 ## License

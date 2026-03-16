@@ -48,6 +48,25 @@ class TextitBiz_Notifications {
 		$stored   = get_option( self::OPTION_KEY, array() );
 		$settings = wp_parse_args( $stored, $defaults );
 
+		$integration_flags = array( 'enable_metform', 'enable_elementor_pro', 'enable_contact_form_7', 'enable_woocommerce' );
+		$all_disabled      = true;
+
+		foreach ( $integration_flags as $flag ) {
+			if ( '1' === (string) $settings[ $flag ] ) {
+				$all_disabled = false;
+				break;
+			}
+		}
+
+		if ( $all_disabled ) {
+			foreach ( $integration_flags as $flag ) {
+				$settings[ $flag ] = '1';
+				$stored[ $flag ]   = '1';
+			}
+
+			update_option( self::OPTION_KEY, $stored, false );
+		}
+
 		if ( ! empty( $settings['api_key'] ) && empty( $settings['api_key_enc'] ) ) {
 			$encrypted = $this->encrypt_secret( $settings['api_key'] );
 

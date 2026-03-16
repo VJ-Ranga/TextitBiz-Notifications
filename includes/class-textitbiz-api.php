@@ -14,6 +14,7 @@ class TextitBiz_API {
 	public function send( $recipient, $message, array $context = array() ) {
 		$user_id = trim( (string) $this->plugin->get_setting( 'user_id', '' ) );
 		$api_key = trim( (string) $this->plugin->get_api_password() );
+		$message = $this->normalize_message_for_gateway( $message );
 
 		if ( '' === $user_id || '' === $api_key ) {
 			return new WP_Error( 'textitbiz_missing_credentials', 'Textit.biz credentials are missing.' );
@@ -28,7 +29,6 @@ class TextitBiz_API {
 			'pw'   => $api_key,
 			'to'   => $recipient,
 			'text' => $message,
-			'ref'  => ! empty( $context['form_id'] ) ? substr( sanitize_text_field( (string) $context['form_id'] ), 0, 15 ) : '',
 		);
 
 		$attempts = array(
@@ -101,6 +101,20 @@ class TextitBiz_API {
 		}
 
 		return false;
+	}
+
+	private function normalize_message_for_gateway( $message ) {
+		$text = (string) $message;
+
+		$text = str_replace( array( "\r\n", "\r", "\n" ), ' | ', $text );
+		$text = preg_replace( '/\s+/', ' ', $text );
+		$text = trim( $text );
+
+		if ( '' === $text ) {
+			$text = 'New form submission';
+		}
+
+		return $text;
 	}
 
 	public static function normalize_phone( $value ) {

@@ -17,7 +17,13 @@ class TextitBiz_Integration_Manager {
 			new TextitBiz_Integration_MetForm( $plugin );
 		}
 
-		if ( $plugins['elementor_pro']['active'] ) {
+		$elementor_pro_available =
+			$plugins['elementor_pro']['active'] ||
+			defined( 'ELEMENTOR_PRO_VERSION' ) ||
+			class_exists( '\\ElementorPro\\Plugin' ) ||
+			did_action( 'elementor_pro/init' );
+
+		if ( $elementor_pro_available ) {
 			new TextitBiz_Integration_Elementor_Pro( $plugin );
 		}
 

@@ -15,12 +15,22 @@ class TextitBiz_Admin {
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_post_textitbiz_clear_logs', array( $this, 'handle_clear_logs' ) );
+		add_action( 'admin_post_textitbiz_send_test_sms', array( $this, 'handle_send_test_sms' ) );
 	}
 
 	public function register_menu() {
 		add_options_page(
-			'TextitBiz Notifications',
-			'TextitBiz Notifications',
+			'TextitBiz SMS',
+			'TextitBiz SMS',
+			'manage_options',
+			'textitbiz-notifications',
+			array( $this, 'render_page' )
+		);
+
+		add_submenu_page(
+			'plugins.php',
+			'TextitBiz SMS',
+			'TextitBiz SMS',
 			'manage_options',
 			'textitbiz-notifications',
 			array( $this, 'render_page' )
@@ -38,13 +48,6 @@ class TextitBiz_Admin {
 	public function sanitize_settings( $input ) {
 		$existing   = $this->plugin->get_settings();
 		$new_secret = sanitize_text_field( $input['api_key'] ?? '' );
-		$checkboxes = array(
-			'enabled',
-			'enable_metform',
-			'enable_elementor_pro',
-			'enable_contact_form_7',
-			'enable_woocommerce',
-		);
 
 		$output = array(
 			'user_id'          => sanitize_text_field( $input['user_id'] ?? '' ),
@@ -52,6 +55,11 @@ class TextitBiz_Admin {
 			'api_key_enc'      => '',
 			'admin_phone'      => sanitize_text_field( $input['admin_phone'] ?? '' ),
 			'message_template' => sanitize_textarea_field( $input['message_template'] ?? '' ),
+			'enabled'          => isset( $input['enabled'] ) ? '1' : '0',
+			'enable_metform'   => isset( $existing['enable_metform'] ) ? (string) $existing['enable_metform'] : '1',
+			'enable_elementor_pro' => isset( $existing['enable_elementor_pro'] ) ? (string) $existing['enable_elementor_pro'] : '1',
+			'enable_contact_form_7' => isset( $existing['enable_contact_form_7'] ) ? (string) $existing['enable_contact_form_7'] : '1',
+			'enable_woocommerce' => isset( $existing['enable_woocommerce'] ) ? (string) $existing['enable_woocommerce'] : '1',
 			'monitored_forms'  => array_values(
 				array_filter(
 					array_map(
@@ -61,10 +69,6 @@ class TextitBiz_Admin {
 				)
 			),
 		);
-
-		foreach ( $checkboxes as $checkbox ) {
-			$output[ $checkbox ] = isset( $input[ $checkbox ] ) ? '1' : '0';
-		}
 
 		if ( '' !== $new_secret ) {
 			$encrypted = $this->plugin->encrypt_secret( $new_secret );
@@ -104,9 +108,16 @@ class TextitBiz_Admin {
 			'textitbiz_clear_logs_action',
 			'textitbiz_clear_logs_nonce'
 		);
+		$test_sms_url = wp_nonce_url(
+			admin_url( 'admin-post.php?action=textitbiz_send_test_sms' ),
+			'textitbiz_send_test_sms_action',
+			'textitbiz_send_test_sms_nonce'
+		);
+		$default_test_message = 'Test SMS from TextitBiz SMS';
 		?>
 		<div class="wrap">
-			<h1>TextitBiz Notifications</h1>
+			<h1>TextitBiz SMS</h1>
+			<?php $this->render_status_notice(); ?>
 			<form method="post" action="options.php" style="max-width:980px;">
 				<?php settings_fields( 'textitbiz_notifications' ); ?>
 
@@ -213,6 +224,24 @@ class TextitBiz_Admin {
 
 				<?php submit_button(); ?>
 			</form>
+
+			<div style="max-width:980px;background:#fff;border:1px solid #dcdcde;padding:24px;margin:20px 0;">
+				<h2 style="margin-top:0;">Test SMS Connection</h2>
+				<p>Use this to verify your Textit.biz credentials and connectivity.</p>
+				<form method="post" action="<?php echo esc_url( $test_sms_url ); ?>">
+					<table class="form-table" role="presentation">
+						<tr>
+							<th scope="row">Test Mobile Number</th>
+							<td><input type="text" class="regular-text" name="textitbiz_test_to" value="<?php echo esc_attr( $settings['admin_phone'] ?? '' ); ?>"></td>
+						</tr>
+						<tr>
+							<th scope="row">Test Message</th>
+							<td><input type="text" class="regular-text" name="textitbiz_test_message" value="<?php echo esc_attr( $default_test_message ); ?>"></td>
+						</tr>
+					</table>
+					<?php submit_button( 'Send Test SMS', 'secondary', 'submit', false ); ?>
+				</form>
+			</div>
 		</div>
 		<script>
 		(function() {
@@ -313,6 +342,68 @@ class TextitBiz_Admin {
 
 		wp_safe_redirect( admin_url( 'options-general.php?page=textitbiz-notifications' ) );
 		exit;
+	}
+
+	public function handle_send_test_sms() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You are not allowed to perform this action.', 'textitbiz-notifications' ) );
+		}
+
+		check_admin_referer( 'textitbiz_send_test_sms_action', 'textitbiz_send_test_sms_nonce' );
+
+		$to_raw      = isset( $_POST['textitbiz_test_to'] ) ? sanitize_text_field( wp_unslash( $_POST['textitbiz_test_to'] ) ) : '';
+		$message_raw = isset( $_POST['textitbiz_test_message'] ) ? sanitize_text_field( wp_unslash( $_POST['textitbiz_test_message'] ) ) : '';
+
+		$to      = TextitBiz_API::normalize_phone( $to_raw );
+		$message = '' !== trim( $message_raw ) ? $message_raw : 'Test SMS from TextitBiz SMS';
+
+		if ( '' === $to ) {
+			$this->redirect_with_status( 'error', 'Please enter a valid mobile number for test SMS.' );
+		}
+
+		$api    = new TextitBiz_API( $this->plugin );
+		$result = $api->send( $to, $message, array( 'form_id' => 'test_sms' ) );
+
+		if ( is_wp_error( $result ) ) {
+			$this->plugin->log( 'error', 'test_sms', $result->get_error_message(), array( 'recipient' => $to ) );
+			$this->redirect_with_status( 'error', $result->get_error_message() );
+		}
+
+		$this->plugin->log( 'success', 'test_sms', 'Test SMS sent successfully.', array( 'recipient' => $to ) );
+		$this->redirect_with_status( 'success', 'Test SMS sent successfully.' );
+	}
+
+	private function redirect_with_status( $status, $message ) {
+		$url = add_query_arg(
+			array(
+				'page'                  => 'textitbiz-notifications',
+				'textitbiz_test_status' => sanitize_key( $status ),
+				'textitbiz_test_msg'    => rawurlencode( (string) $message ),
+			),
+			admin_url( 'options-general.php' )
+		);
+
+		wp_safe_redirect( $url );
+		exit;
+	}
+
+	private function render_status_notice() {
+		$status = isset( $_GET['textitbiz_test_status'] ) ? sanitize_key( wp_unslash( $_GET['textitbiz_test_status'] ) ) : '';
+		$msg    = isset( $_GET['textitbiz_test_msg'] ) ? sanitize_text_field( rawurldecode( wp_unslash( $_GET['textitbiz_test_msg'] ) ) ) : '';
+
+		if ( '' === $status || '' === $msg ) {
+			return;
+		}
+
+		$class = 'notice-info';
+
+		if ( 'success' === $status ) {
+			$class = 'notice-success';
+		} elseif ( 'error' === $status ) {
+			$class = 'notice-error';
+		}
+
+		echo '<div class="notice ' . esc_attr( $class ) . ' is-dismissible"><p>' . esc_html( $msg ) . '</p></div>';
 	}
 
 	private function build_form_template( array $form ) {

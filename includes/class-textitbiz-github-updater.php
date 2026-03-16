@@ -65,7 +65,7 @@ class TextitBiz_GitHub_Updater {
 		$release = $this->get_latest_release();
 
 		return (object) array(
-			'name'          => 'TextitBiz Notifications',
+			'name'          => 'TextitBiz SMS',
 			'slug'          => $plugin_slug,
 			'plugin'        => $this->plugin_basename,
 			'version'       => ! empty( $release['version'] ) ? $release['version'] : $this->version,

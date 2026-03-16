@@ -1,10 +1,10 @@
-=== TextitBiz Notifications ===
+=== TextitBiz SMS ===
 Contributors: VJ-Ranga
 Tags: sms, forms, notifications, metform, elementor, contact-form-7, woocommerce
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.1.6
+Stable tag: 0.1.13
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ Send SMS notifications through Textit.biz when selected WordPress forms are subm
 
 == Description ==
 
-TextitBiz Notifications connects selected WordPress forms to Textit.biz SMS delivery.
+TextitBiz SMS connects selected WordPress forms to Textit.biz SMS delivery.
 
 Features:
 
@@ -34,7 +34,7 @@ Supported plugins:
 
 1. Upload the plugin to `/wp-content/plugins/textitbiz-notifications/`
 2. Activate the plugin through the WordPress Plugins screen
-3. Go to `Settings -> TextitBiz Notifications`
+3. Go to `Settings -> TextitBiz SMS`
 4. Select the forms you want to monitor
 5. Enter your Textit.biz credentials and admin mobile number
 6. Save settings and test a submission
@@ -54,6 +54,14 @@ It uses the Textit.biz Basic HTTP API.
 Yes. The plugin shows field-based shortcodes like `{field:mf-tel}` depending on the selected form.
 
 == Changelog ==
+
+= 0.1.13 =
+* Renamed plugin display name to TextitBiz SMS
+
+= 0.1.11 =
+* Restored stable settings visibility and Settings action link
+* Improved Elementor Pro submission capture and monitoring match
+* Added fallback integration safeguards to avoid silent disable states
 
 = 0.1.6 =
 * Improved Textit.biz API compatibility with POST/GET fallback
