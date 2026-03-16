@@ -2,6 +2,8 @@
 
 WordPress plugin for sending SMS alerts through [Textit.biz](https://textit.biz/) when selected forms are submitted.
 
+Current version: `v0.2`
+
 ## What it does
 
 - Detects active supported plugins
@@ -45,7 +47,7 @@ Request format used by the plugin:
 
 ## Installation for development
 
-1. Copy this project folder into `wp-content/plugins/textitbiz-notifications`
+1. Copy this project folder into `wp-content/plugins/textitbiz-sms`
 2. Activate `TextitBiz SMS`
 3. Open `Settings -> TextitBiz SMS`
 4. Select forms, enter Textit.biz credentials, and save
@@ -53,3 +55,7 @@ Request format used by the plugin:
 ## License
 
 GPL-2.0-or-later
+
+## Changelog
+
+- `v0.2`: version update, Elementor Pro submission reliability improvements, test SMS panel, settings visibility fixes.

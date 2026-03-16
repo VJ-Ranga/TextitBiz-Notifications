@@ -4,7 +4,7 @@ Tags: sms, forms, notifications, metform, elementor, contact-form-7, woocommerce
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.1.13
+Stable tag: 0.2.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -32,7 +32,7 @@ Supported plugins:
 
 == Installation ==
 
-1. Upload the plugin to `/wp-content/plugins/textitbiz-notifications/`
+1. Upload the plugin to `/wp-content/plugins/textitbiz-sms/`
 2. Activate the plugin through the WordPress Plugins screen
 3. Go to `Settings -> TextitBiz SMS`
 4. Select the forms you want to monitor
@@ -54,6 +54,29 @@ It uses the Textit.biz Basic HTTP API.
 Yes. The plugin shows field-based shortcodes like `{field:mf-tel}` depending on the selected form.
 
 == Changelog ==
+
+= 0.2.6 =
+* Cleaner SMS logs UI with collapsible details
+* Hide noisy info logs and keep important statuses visible
+
+= 0.2.5 =
+* Fixed Elementor form submission fatal error by replacing wp_url_to_postid fallback
+* Improved package title lookup from submitted page URL
+
+= 0.2.3 =
+* Disabled submission cooldown for reliable live form testing
+* Keeps dynamic package fallback from current page title
+
+= 0.2.2 =
+* Added fallback package detection from current page title for Elementor dynamic hidden fields
+
+= 0.2.1 =
+* Improve Elementor field capture by merging sent_data
+* Auto-append Subject in SMS when available and template omits it
+
+= 0.2 =
+* Release version update to v0.2
+* Includes Elementor Pro submission fixes, test SMS panel, and settings visibility improvements
 
 = 0.1.13 =
 * Renamed plugin display name to TextitBiz SMS
